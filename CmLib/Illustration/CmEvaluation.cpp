@@ -341,6 +341,7 @@ void CmEvaluation::DebugEvalueMask(CStr& workDir, CStr &inDir, CStr& maskfDir, v
 	if (des.size() == 1)
 		printf("Precision = %g, recall = %g, F-Measure = %g\n", pr[0], rec[0], fm[0]);
 }
+void CmEvaluation::EvalueMask(CStr gtW, CStr &maskDir, vecS &des, CStr resFile, double betaSqr, bool alertNul, CStr suffix, CStr title)
 {
 	vecS namesNS; 
 	string gtDir, gtExt;

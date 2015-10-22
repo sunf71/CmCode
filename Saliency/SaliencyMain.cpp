@@ -64,9 +64,9 @@ int EvaluateMain(int argc, char* argv[])
 	//des.push_back("HC");  
 	//des.push_back("RC");
 	//des.push_back("SF"); des.push_back("SalPIF");
-	CmEvaluation::EvalueMask(wkDir + imgFolder + "\\*.png", wkDir + "\\" + rstFolder+"\\", des, wkDir + "\\Results.m");
+	//CmEvaluation::EvalueMask(wkDir + imgFolder + "\\*.png", wkDir + "\\" + rstFolder+"\\", des, wkDir + "\\Results.m");
 	//CmEvaluation::EvalueMaskProposals(wkDir, imgFolder, rstFolder, des, wkDir + "CutRes.m");
-	//CmEvaluation::DebugEvalueMask(wkDir, imgFolder, rstFolder, des, wkDir + "CutRes.m");
+	CmEvaluation::DebugEvalueMask(wkDir, imgFolder, rstFolder, des, wkDir + "CutRes.m");
 	return 1;
 }
 int main(int argc, char* argv[])

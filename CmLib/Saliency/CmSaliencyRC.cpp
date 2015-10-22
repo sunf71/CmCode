@@ -34,14 +34,23 @@ void CmSaliencyRC::Get(CStr &imgNameW, CStr &salFileDir)
 
 		CmFile::Copy(inDir + name, salFileDir + name);
 		img3f.convertTo(img3f, CV_32FC3, 1.0/255);
-
-		for (int f = 0; f < SAL_TYPE_NUM; f++){
-			//timer[f].Start();
-			//sal = Get(img3f, gFuns[f], 400);			
-			sal = gFuns[f](img3f);
-			//timer[f].Stop();
-			imwrite(salFileDir + names[i] + "_" + SAL_TYPE_DES[f] + ".png", sal*255);
-		}
+		/*std::string fName(name);
+		fName.resize(fName.size() - 4);
+		Mat regIdxMat = imread(inDir + "segment_" + fName + ".bmp", CV_LOAD_IMAGE_ANYDEPTH);
+		regIdxMat.convertTo(regIdxMat, CV_32S);
+		double max, min;
+		cv::minMaxLoc(regIdxMat, &min, &max);
+		int regSize = max - min + 1;
+		sal = GetRC(img3f, regIdxMat, regSize, 0.5);*/
+		sal = GetRC(img3f);
+		imwrite(salFileDir + names[i] + "_RC" + ".png", sal * 255);
+		//for (int f = 0; f < SAL_TYPE_NUM; f++){
+		//	//timer[f].Start();
+		//	//sal = Get(img3f, gFuns[f], 400);			
+		//	sal = gFuns[f](img3f);
+		//	//timer[f].Stop();
+		//	imwrite(salFileDir + names[i] + "_" + SAL_TYPE_DES[f] + ".png", sal*255);
+		//}
 	}
 	//for (int f = 0; f < SAL_TYPE_NUM; f++)
 	//	timer[f].Report();
@@ -155,6 +164,7 @@ Mat CmSaliencyRC::GetRC(CMat &img3f, double sigmaDist, double segK, int segMinSi
 	Mat imgLab3f, regIdx1i;
 	cvtColor(img3f, imgLab3f, CV_BGR2Lab);
 	int regNum = SegmentImage(imgLab3f, regIdx1i, segSigma, segK, segMinSize);	
+
 	return GetRC(img3f, regIdx1i, regNum, sigmaDist);
 }
 

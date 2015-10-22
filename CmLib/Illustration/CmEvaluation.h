@@ -25,7 +25,8 @@ struct CmEvaluation
 	// Plot the FMeasure bar
 	static void EvalueMask(CStr gtW, CStr &maskDir, vecS &des, CStr resFile, double betaSqr = 0.3, bool alertNul = false, CStr suffix = "");
 	static void EvalueMask(CStr gtW, CStr &maskDir, CStr &des, CStr resFile, double betaSqr = 0.3, bool alertNul = false, CStr suffix = "");
-
+	static void DebugEvalueMask(CStr& wkDir, CStr &inDir, CStr& maskDir,vecS &des, CStr resFile, double betaSqr = 0.3, bool alertNul = false, CStr suffix = "");
+	static void EvalueMaskProposals(CStr& wkDir, CStr &inDir, CStr& maskDir, vecS &des, CStr resFile, double betaSqr = 0.3, bool alertNul = false, CStr suffix = "");
 public: // Assistant functions
 
 	static void MeanAbsoluteError(CStr inDir, CStr salDir, vecS des, bool zeroMapIfMissing = false);

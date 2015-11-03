@@ -190,15 +190,17 @@ void CmEvaluation::EvalueMask(CStr gtW, CStr &maskDir, CStr &des, CStr resFile, 
 void CmEvaluation::EvalueMaskProposals(CStr& wkDir, CStr &inDir, CStr& maskDir, vecS &des, CStr resFile, double betaSqr, bool alertNul, CStr suffix)
 {
 	CStr gtW = wkDir + inDir + "\\*.png";
+	CStr inputW = wkDir + inDir + "\\*.jpg";
 	CStr maskfDir = wkDir + maskDir + "\\";
-	CStr failPath80 = wkDir + "fail80\\";
-	CStr failPath50 = wkDir + "faile50\\";
+	CStr failPath80 = wkDir + maskDir + "\\fail80\\";
+	CStr failPath50 = wkDir + maskDir + "\\fail50\\";
 	
 	CmFile::MkDir(failPath80);
 	CmFile::MkDir(failPath50);
 	vecS namesNS;
 	string gtDir, gtExt;
-	int imgNum = CmFile::GetNamesNE(gtW, namesNS, gtDir, gtExt);
+	int imgNum = CmFile::GetNamesNE(inputW, namesNS, gtDir, gtExt);
+	gtExt = ".png";
 	int methodNum = (int)des.size();
 	vecD pr(methodNum), rec(methodNum), count(methodNum), fm(methodNum);
 	for (int i = 0; i < imgNum; i++){
@@ -279,8 +281,8 @@ void CmEvaluation::DebugEvalueMask(CStr& workDir, CStr &inDir, CStr& maskfDir, v
 {
 	CStr gtW = workDir + inDir + "\\*.png";
 	CStr maskDir = workDir + "\\" + maskfDir+"\\";
-	CStr failPath80 = workDir + "\\fail80\\";
-	CStr failPath50 = workDir + "\\faile50\\";
+	CStr failPath80 = maskDir + "fail80\\";
+	CStr failPath50 = maskDir + "fail50\\";
 	CmFile::MkDir(failPath80);
 	CmFile::MkDir(failPath50);
 	vecS namesNS;

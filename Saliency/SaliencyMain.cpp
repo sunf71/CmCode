@@ -53,20 +53,35 @@ void Evaluate()
 }
 int EvaluateMain(int argc, char* argv[])
 {
-	CStr wkDir = argv[1];
-	CStr imgFolder = argv[2];
-	CStr rstFolder = argv[3];
-	CStr methodNam = argv[4];
+	int fId = atoi(argv[1]);
+	CStr wkDir = argv[2];
+	CStr imgFolder = argv[3];
+	CStr rstFolder = argv[4];
+	CStr methodNam = argv[5];
 	vecS des;
 	des.push_back(methodNam);
 	
-	
+	switch (fId)
+	{
+	case 0:
+		CmEvaluation::EvalueMask(wkDir + imgFolder + "\\*.png", wkDir + "\\" + rstFolder + "\\", des, wkDir + "\\Results.m");
+		break;
+	case 1:
+		CmEvaluation::DebugEvalueMask(wkDir, imgFolder, rstFolder, des, wkDir + "CutRes.m");
+		break;
+	case 2:
+		CmEvaluation::EvalueMaskProposals(wkDir, imgFolder, rstFolder, des, wkDir + "CutRes.m");
+		break;
+
+	default:
+		break;
+	}
 	//des.push_back("HC");  
 	//des.push_back("RC");
 	//des.push_back("SF"); des.push_back("SalPIF");
 	//CmEvaluation::EvalueMask(wkDir + imgFolder + "\\*.png", wkDir + "\\" + rstFolder+"\\", des, wkDir + "\\Results.m");
 	//CmEvaluation::EvalueMaskProposals(wkDir, imgFolder, rstFolder, des, wkDir + "CutRes.m");
-	CmEvaluation::DebugEvalueMask(wkDir, imgFolder, rstFolder, des, wkDir + "CutRes.m");
+	//CmEvaluation::DebugEvalueMask(wkDir, imgFolder, rstFolder, des, wkDir + "CutRes.m");
 	return 1;
 }
 int main(int argc, char* argv[])

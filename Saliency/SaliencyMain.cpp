@@ -149,31 +149,72 @@ void ChooseWeight()
 	float wf, ws, wo;
 	float maxHitRate(0);
 	float maxWf, maxWs, maxWo;
+	struct proposal
+	{
+		int id;
+		float score;
+	};
+	struct propCMP
+	{
+		bool operator()(proposal& p1, proposal& p2)
+		{
+			return p1.score > p2.score;
+		}
+	};
+	char wkpath[200] = "e:\\";
 	for ( wf = 0; wf < 1; wf += step)
 	{
 		for ( ws = 0; ws < 1; ws += step)
 		{
 			wo = 1 - wf - ws;
 			float count(0);
+			
 			for (size_t i = 0; i < paraSets.size(); i++)
 			{
+				std::vector<proposal> proposals;
 				float maxWeight(0);
 				int maxId(0);
+				paraSets[i].name;
+				char imgName[200];
+				cv::Mat result;
 				for (size_t j = 0; j < paraSets[i].paras.size(); j++)
 				{
+
 					Para para = paraSets[i].paras[j];
+					
 					float weight = para.fill*wf + para.obj*wo + para.size*ws;
+					
+					proposal p;
+					p.id = j;
+					p.score = weight;
 					if (weight > maxWeight)
 					{
 						maxWeight = weight;
 						maxId = j;
 					}
+					proposals.push_back(p);
 
 				}
-				if (maxId == paraSets[i].maxId)
+				/*if (maxId == paraSets[i].maxId)
+					count++;*/
+				std::sort(proposals.begin(), proposals.end(), propCMP());
+				for (size_t p = 0; p < proposals.size(); p++)
+				{
+					sprintf(imgName, "%s%s\\dSaliency_%2d_%2d_%2d.png", wkpath, paraSets[i].name, para.id + 2, (int)(para.fill * 100), (int)(para.size * 100), (int)(para.obj * 100));
+					cv::Mat sal = cv::imread(imgName, -1);
+					if (result.empty())
+						result = cv::Mat::zeros(sal.size(), CV_32F);
+					if (sal.channels() == 3)
+						cv::cvtColor(sal, sal, CV_BGR2GRAY);
+					float weight = para.fill*wf + para.obj*wo + para.size*ws;
+					cv::addWeighted(sal, weight, result, 1, 0, result, CV_32F);
+				}
+
+				if (proposals[0].id == maxId)
 					count++;
 
 			}
+			
 			float hitRate = count / paraSets.size();
 			if (hitRate > maxHitRate)
 			{

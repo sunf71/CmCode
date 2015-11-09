@@ -189,6 +189,8 @@ void CmEvaluation::EvalueMask(CStr gtW, CStr &maskDir, CStr &des, CStr resFile, 
 }
 void CmEvaluation::EvalueMaskProposals(CStr& wkDir, CStr &inDir, CStr& maskDir, vecS &des, CStr resFile, double betaSqr, bool alertNul, CStr suffix)
 {
+
+	std::ofstream outFile("data.txt");
 	CStr gtW = wkDir + inDir + "\\*.png";
 	CStr inputW = wkDir + inDir + "\\*.jpg";
 	CStr maskfDir = wkDir + maskDir + "\\";
@@ -204,6 +206,7 @@ void CmEvaluation::EvalueMaskProposals(CStr& wkDir, CStr &inDir, CStr& maskDir, 
 	int methodNum = (int)des.size();
 	vecD pr(methodNum), rec(methodNum), count(methodNum), fm(methodNum);
 	for (int i = 0; i < imgNum; i++){
+		outFile << namesNS[i] << "\n";
 		Mat truM = imread(gtDir + namesNS[i] + gtExt, CV_LOAD_IMAGE_GRAYSCALE);
 		for (int m = 0; m < methodNum; m++)	{
 			vecS namesP;
@@ -211,6 +214,7 @@ void CmEvaluation::EvalueMaskProposals(CStr& wkDir, CStr &inDir, CStr& maskDir, 
 			string propMask = wkDir + maskDir + "\\"+namesNS[i]+"\\saliency\\*.png";
 			int propNum = CmFile::GetNamesNE(propMask, namesP, propDir, propExt);
 			int maxId(0);
+			std::string maxStr;
 			double maxP(0);
 			double maxR(0);
 			double maxFm(0);
@@ -219,6 +223,21 @@ void CmEvaluation::EvalueMaskProposals(CStr& wkDir, CStr &inDir, CStr& maskDir, 
 			for (int s = 0; s < propNum; s++)
 			{
 				mapName = wkDir + maskDir + "\\" + namesNS[i] + "\\saliency\\" + namesP[s];
+				std::size_t found = namesP[s].find("Saliency"); 
+				if (found == std::string::npos)
+					continue;
+				
+				std::string fStr = std::string(&namesP[s][found + 9], 2);
+				float fill = atoi(fStr.c_str())*0.01;
+				fStr = std::string(&namesP[s][found + 12], 2);
+				float size = atoi(fStr.c_str())*0.01;
+
+				fStr = std::string(&namesP[s][found + 15], 2);
+				float obj = atoi(fStr.c_str())*0.01;
+
+				fStr = std::string(&namesP[s][0], found);
+				outFile << fStr << "\t" << fill << "\t" << size << "\t" << obj << "\n";
+
 				mapName += suffix.empty() ? ".png" : "_" + suffix + ".png";
 				Mat res = imread(mapName, CV_LOAD_IMAGE_GRAYSCALE);
 				if (truM.data == NULL || res.data == NULL || truM.size != res.size){
@@ -241,8 +260,11 @@ void CmEvaluation::EvalueMaskProposals(CStr& wkDir, CStr &inDir, CStr& maskDir, 
 					maxR = r;
 					maxId = s;
 					fRes = res.clone();
+					maxStr = fStr;
+				
 				}
 			}
+			outFile << maxStr << "\n";
 			char fmStr[5];
 			sprintf(fmStr, "%2d", (int)(maxFm * 100));
 			if (maxFm < 0.5)
@@ -273,7 +295,7 @@ void CmEvaluation::EvalueMaskProposals(CStr& wkDir, CStr &inDir, CStr& maskDir, 
 		fm[m] = (1 + betaSqr) * pr[m] * rec[m] / (betaSqr * pr[m] + rec[m] + EPS);
 	}
 
-
+	outFile.close();
 	if (des.size() == 1)
 		printf("Precision = %g, recall = %g, F-Measure = %g\n", pr[0], rec[0], fm[0]);
 }

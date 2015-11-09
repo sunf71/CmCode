@@ -84,9 +84,115 @@ int EvaluateMain(int argc, char* argv[])
 	//CmEvaluation::DebugEvalueMask(wkDir, imgFolder, rstFolder, des, wkDir + "CutRes.m");
 	return 1;
 }
+void ChooseWeight()
+{
+	FILE * pFile(NULL);
+	struct Para
+	{
+		int id;
+		float obj;
+		float fill;
+		float size;
+	
+	};
+	struct ParaSet
+	{
+		std::string name;
+		std::vector<Para> paras;
+		int maxId;
+	};
+	errno_t err = fopen_s(&pFile, "data.txt", "rt");
+	char name[20];
+	int id(0),max(0);
+	float fill(0), size(0), obj(0);
+	std::vector<ParaSet> paraSets;
+	
+	char buffer[512];
+	while (fgets(buffer,512,pFile))
+	{
+		strcpy_s(name, buffer);
+		std::vector<Para> paras;
+		while (1)
+		{
+			
+			fgets(buffer, 512, pFile);
+			if (strlen(buffer) > 10)
+			{
+				sscanf_s(buffer, "%d\t%f\t%f\t%f\n%d", &id, &fill, &size, &obj);
+				Para para;
+				para.id = id - 2;
+				para.fill = fill;
+				para.size = size;
+				para.obj = obj;
+				paras.push_back(para);
+			}
+			else
+			{
+				
+				sscanf_s(buffer, "%d", &max);
+				ParaSet set;
+				set.maxId = max - 2;
+				set.paras = paras;
+				set.name = std::string(name);
+				paraSets.push_back(set);
+				break;
+			}
+		}
+		
+		
+		
+		
+	}
+	
+	fclose(pFile);
+	float step = 0.05;
+	float wf, ws, wo;
+	float maxHitRate(0);
+	float maxWf, maxWs, maxWo;
+	for ( wf = 0; wf < 1; wf += step)
+	{
+		for ( ws = 0; ws < 1; ws += step)
+		{
+			wo = 1 - wf - ws;
+			float count(0);
+			for (size_t i = 0; i < paraSets.size(); i++)
+			{
+				float maxWeight(0);
+				int maxId(0);
+				for (size_t j = 0; j < paraSets[i].paras.size(); j++)
+				{
+					Para para = paraSets[i].paras[j];
+					float weight = para.fill*wf + para.obj*wo + para.size*ws;
+					if (weight > maxWeight)
+					{
+						maxWeight = weight;
+						maxId = j;
+					}
+
+				}
+				if (maxId == paraSets[i].maxId)
+					count++;
+
+			}
+			float hitRate = count / paraSets.size();
+			if (hitRate > maxHitRate)
+			{
+				maxHitRate = hitRate;
+				maxWf = wf;
+				maxWo = wo;
+				maxWs = ws;
+			}
+		}
+	}
+	
+	
+	std::cout << maxWf << "," << maxWo << "," << maxWs << " hitRate " << maxHitRate << "\n";
+}
 int main(int argc, char* argv[])
 {	
-	return EvaluateMain(argc, argv);
+	ChooseWeight();
+	return 0;
+	//return EvaluateMain(argc, argv);
 	//TestGetHC();
 	//return 0;
 	CStr wkDir = "G:\\MSRA10K_Imgs_GT\\MSRA10K_Imgs_GT\\";

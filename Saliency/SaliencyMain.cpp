@@ -110,7 +110,9 @@ void ChooseWeight()
 	char buffer[512];
 	while (fgets(buffer,512,pFile))
 	{
-		strcpy_s(name, buffer);
+		int len = strlen(buffer);
+		buffer[len - 1] = '\0';
+		strcpy_s(name,  buffer);
 		std::vector<Para> paras;
 		while (1)
 		{
@@ -149,10 +151,15 @@ void ChooseWeight()
 	float wf, ws, wo;
 	float maxHitRate(0);
 	float maxWf, maxWs, maxWo;
+	float maxFm(0);
 	struct proposal
 	{
 		int id;
+		float fill;
+		float size;
+		float obj;
 		float score;
+		cv::Mat propSalMap;
 	};
 	struct propCMP
 	{
@@ -161,20 +168,24 @@ void ChooseWeight()
 			return p1.score > p2.score;
 		}
 	};
-	char wkpath[200] = "e:\\";
+	char wkpath[200] = "G:\\ECSSD_Saliency_DS\\images\\";
+	std::string rstPath = std::string(wkpath) + "saliency119\\";
 	for ( wf = 0; wf < 1; wf += step)
 	{
 		for ( ws = 0; ws < 1; ws += step)
 		{
 			wo = 1 - wf - ws;
 			float count(0);
+			float pr(0), rec(0);
+		
 			
 			for (size_t i = 0; i < paraSets.size(); i++)
 			{
+				
 				std::vector<proposal> proposals;
 				float maxWeight(0);
 				int maxId(0);
-				paraSets[i].name;
+				
 				char imgName[200];
 				cv::Mat result;
 				for (size_t j = 0; j < paraSets[i].paras.size(); j++)
@@ -187,6 +198,9 @@ void ChooseWeight()
 					proposal p;
 					p.id = j;
 					p.score = weight;
+					p.fill = para.fill;
+					p.obj = para.obj;
+					p.size = para.size;
 					if (weight > maxWeight)
 					{
 						maxWeight = weight;
@@ -198,36 +212,64 @@ void ChooseWeight()
 				/*if (maxId == paraSets[i].maxId)
 					count++;*/
 				std::sort(proposals.begin(), proposals.end(), propCMP());
-				for (size_t p = 0; p < proposals.size(); p++)
+				float weightSum = 0;
+				for (size_t p = 0; p < 1; p++)
 				{
-					sprintf(imgName, "%s%s\\dSaliency_%2d_%2d_%2d.png", wkpath, paraSets[i].name, para.id + 2, (int)(para.fill * 100), (int)(para.size * 100), (int)(para.obj * 100));
+					std::string path = rstPath + paraSets[i].name + "\\saliency\\";
+					sprintf_s(imgName, "%s%dSaliency_%2d_%2d_%2d.png", path.c_str(), proposals[p].id + 2, (int)(proposals[p].fill * 100+0.5), (int)(proposals[p].size * 100+0.5), (int)(proposals[p].obj * 100+0.5));
 					cv::Mat sal = cv::imread(imgName, -1);
 					if (result.empty())
 						result = cv::Mat::zeros(sal.size(), CV_32F);
 					if (sal.channels() == 3)
 						cv::cvtColor(sal, sal, CV_BGR2GRAY);
-					float weight = para.fill*wf + para.obj*wo + para.size*ws;
-					cv::addWeighted(sal, weight, result, 1, 0, result, CV_32F);
+					float weight = proposals[p].score;
+					proposals[p].propSalMap = sal.clone();
+					//cv::addWeighted(sal, weight, result, 1, 0, result, CV_32F);
+					weightSum += weight;
 				}
+				for (size_t p = 0; p <1; p++)
+				{
+					cv::addWeighted(proposals[p].propSalMap, proposals[p].score/weightSum, result, 1, 0, result, CV_32F);
+				}
+				cv::normalize(result, result, 0, 255, CV_MINMAX, CV_8U);
+				cv::threshold(result, result, 128, 255, CV_THRESH_BINARY);
+				/*cv::imshow("result", result);
+				cv::waitKey();*/
 
-				if (proposals[0].id == maxId)
-					count++;
+				Mat truM = imread(std::string(wkpath) + "\\gt\\" + paraSets[i].name + ".png", CV_LOAD_IMAGE_GRAYSCALE);
+
+				cv::compare(truM, 128, truM, CMP_GE);
+				cv::compare(result, 128, result, CMP_GE);
+				Mat commMat, unionMat, diff1f;
+				cv::bitwise_and(truM, result, commMat);
+				cv::bitwise_or(truM, result, unionMat);
+				double commV = sum(commMat).val[0];
+				double precision = commV / (sum(result).val[0] + EPS);
+				double recall = commV / (sum(truM).val[0] + EPS);
+				pr += precision;
+				rec += recall;
+				/*intUnio[m] += commV / (sum(unionMat).val[0] + EPS);
+				absdiff(truM, res, diff1f);
+				mae[m] += sum(diff1f).val[0] / (diff1f.rows * diff1f.cols * 255);*/
+				count++;
+
+
 
 			}
-			
-			float hitRate = count / paraSets.size();
-			if (hitRate > maxHitRate)
+			pr/= count, rec /= count;
+			float fm = (1 + 0.3) * pr * rec / (0.3 * pr + rec + EPS);
+			if (fm > maxFm)
 			{
-				maxHitRate = hitRate;
+				maxFm = fm;
 				maxWf = wf;
-				maxWo = wo;
 				maxWs = ws;
+				maxWo = wo;
 			}
 		}
 	}
 	
+	std::cout << "max Fm " << maxFm << " @ maxWf " << maxWf << " maxWs " << maxWs << " maxWo " << maxWo << "\n";
 	
-	std::cout << maxWf << "," << maxWo << "," << maxWs << " hitRate " << maxHitRate << "\n";
 }
 int main(int argc, char* argv[])
 {	

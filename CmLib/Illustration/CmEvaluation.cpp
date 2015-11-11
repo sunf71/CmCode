@@ -223,16 +223,19 @@ void CmEvaluation::EvalueMaskProposals(CStr& wkDir, CStr &inDir, CStr& maskDir, 
 			for (int s = 0; s < propNum; s++)
 			{
 				mapName = wkDir + maskDir + "\\" + namesNS[i] + "\\saliency\\" + namesP[s];
-				std::size_t found = namesP[s].find("Saliency"); 
+				std::size_t found = namesP[s].find("Saliency");
 				if (found == std::string::npos)
 					continue;
-				
-				std::string fStr = std::string(&namesP[s][found + 9], 2);
+
+				std::size_t found1 = namesP[s].find("_");
+				std::size_t found2 = namesP[s].find("_", found1+1);
+				std::size_t found3 = namesP[s].find("_", found2+1);
+				std::string fStr = std::string(&namesP[s][found1+1], found2-found1-1);
 				float fill = atoi(fStr.c_str())*0.01;
-				fStr = std::string(&namesP[s][found + 12], 2);
+				fStr = std::string(&namesP[s][found2+1], found3-found2-1);
 				float size = atoi(fStr.c_str())*0.01;
 
-				fStr = std::string(&namesP[s][found + 15], 2);
+				fStr = std::string(&namesP[s][found3+1], namesP[s].length()-found3-1);
 				float obj = atoi(fStr.c_str())*0.01;
 
 				fStr = std::string(&namesP[s][0], found);
@@ -246,7 +249,7 @@ void CmEvaluation::EvalueMaskProposals(CStr& wkDir, CStr &inDir, CStr& maskDir, 
 					continue;
 				}
 				compare(truM, 128, truM, CMP_GE);
-				compare(res, 128, res, CMP_GE);
+				compare(res, 64, res, CMP_GE);
 				Mat commMat;
 				bitwise_and(truM, res, commMat);
 				double commV = sum(commMat).val[0];

@@ -51,39 +51,6 @@ void Evaluate()
 	//CmEvaluation::Evaluate(inDir + "*.png", outDir, wkDir + "Results.m", des);
 	CmEvaluation::DebugEvalueMask(wkDir, inFolder, outFolder, des, wkDir + "CutRes.m");
 }
-int EvaluateMain(int argc, char* argv[])
-{
-	int fId = atoi(argv[1]);
-	CStr wkDir = argv[2];
-	CStr imgFolder = argv[3];
-	CStr rstFolder = argv[4];
-	CStr methodNam = argv[5];
-	vecS des;
-	des.push_back(methodNam);
-	
-	switch (fId)
-	{
-	case 0:
-		CmEvaluation::EvalueMask(wkDir + imgFolder + "\\*.png", wkDir + "\\" + rstFolder + "\\", des, wkDir + "\\Results.m");
-		break;
-	case 1:
-		CmEvaluation::DebugEvalueMask(wkDir, imgFolder, rstFolder, des, wkDir + "CutRes.m");
-		break;
-	case 2:
-		CmEvaluation::EvalueMaskProposals(wkDir, imgFolder, rstFolder, des, wkDir + "CutRes.m");
-		break;
-
-	default:
-		break;
-	}
-	//des.push_back("HC");  
-	//des.push_back("RC");
-	//des.push_back("SF"); des.push_back("SalPIF");
-	//CmEvaluation::EvalueMask(wkDir + imgFolder + "\\*.png", wkDir + "\\" + rstFolder+"\\", des, wkDir + "\\Results.m");
-	//CmEvaluation::EvalueMaskProposals(wkDir, imgFolder, rstFolder, des, wkDir + "CutRes.m");
-	//CmEvaluation::DebugEvalueMask(wkDir, imgFolder, rstFolder, des, wkDir + "CutRes.m");
-	return 1;
-}
 void ChooseWeight()
 {
 	FILE * pFile(NULL);
@@ -93,7 +60,8 @@ void ChooseWeight()
 		float obj;
 		float fill;
 		float size;
-	
+		float edgeBox;
+
 	};
 	struct ParaSet
 	{
@@ -103,20 +71,20 @@ void ChooseWeight()
 	};
 	errno_t err = fopen_s(&pFile, "data.txt", "rt");
 	char name[20];
-	int id(0),max(0);
+	int id(0), max(0);
 	float fill(0), size(0), obj(0);
 	std::vector<ParaSet> paraSets;
-	
+
 	char buffer[512];
-	while (fgets(buffer,512,pFile))
+	while (fgets(buffer, 512, pFile))
 	{
 		int len = strlen(buffer);
 		buffer[len - 1] = '\0';
-		strcpy_s(name,  buffer);
+		strcpy_s(name, buffer);
 		std::vector<Para> paras;
 		while (1)
 		{
-			
+
 			fgets(buffer, 512, pFile);
 			if (strlen(buffer) > 10)
 			{
@@ -130,7 +98,7 @@ void ChooseWeight()
 			}
 			else
 			{
-				
+
 				sscanf_s(buffer, "%d", &max);
 				ParaSet set;
 				set.maxId = max - 2;
@@ -140,12 +108,12 @@ void ChooseWeight()
 				break;
 			}
 		}
-		
-		
-		
-		
+
+
+
+
 	}
-	
+
 	fclose(pFile);
 	float step = 0.05;
 	float wf, ws, wo;
@@ -158,7 +126,9 @@ void ChooseWeight()
 		float fill;
 		float size;
 		float obj;
+		float edgeBox;
 		float score;
+
 		cv::Mat propSalMap;
 	};
 	struct propCMP
@@ -169,32 +139,49 @@ void ChooseWeight()
 		}
 	};
 	char wkpath[200] = "G:\\ECSSD_Saliency_DS\\images\\";
-	std::string rstPath = std::string(wkpath) + "saliency119\\";
-	for ( wf = 0; wf < 1; wf += step)
+	std::string rstPath = std::string(wkpath) + "saliency112\\";
+	for (size_t i = 0; i < paraSets.size(); i++)
 	{
-		for ( ws = 0; ws < 1; ws += step)
+		std::string path = rstPath + paraSets[i].name + "\\saliency\\";
+		char fileName[200];
+		sprintf_s(fileName, "%sboxScore.txt", path.c_str());
+		FILE* boxFile(NULL);
+		errno_t err = fopen_s(&boxFile, fileName, "r");
+		char buffer[512];
+		int p(0);
+		while (fgets(buffer, 512, boxFile))
+		{
+			float score(0);
+			sscanf_s(buffer, "%f", &score);
+			paraSets[i].paras[p].edgeBox = score;
+		}
+		fclose(boxFile);
+	}
+
+	for (wf = 0; wf < 1; wf += step)
+	{
+		for (ws = 0; ws < 1 - wf; ws += step)
 		{
 			wo = 1 - wf - ws;
 			float count(0);
 			float pr(0), rec(0);
-		
-			
+
+
 			for (size_t i = 0; i < paraSets.size(); i++)
 			{
-				
 				std::vector<proposal> proposals;
 				float maxWeight(0);
 				int maxId(0);
-				
+
 				char imgName[200];
 				cv::Mat result;
 				for (size_t j = 0; j < paraSets[i].paras.size(); j++)
 				{
 
 					Para para = paraSets[i].paras[j];
-					
+
 					float weight = para.fill*wf + para.obj*wo + para.size*ws;
-					
+
 					proposal p;
 					p.id = j;
 					p.score = weight;
@@ -210,26 +197,30 @@ void ChooseWeight()
 
 				}
 				/*if (maxId == paraSets[i].maxId)
-					count++;*/
+				count++;*/
 				std::sort(proposals.begin(), proposals.end(), propCMP());
 				float weightSum = 0;
-				for (size_t p = 0; p < 1; p++)
+
+				for (size_t p = 0; p < proposals.size() / 2; p++)
 				{
 					std::string path = rstPath + paraSets[i].name + "\\saliency\\";
-					sprintf_s(imgName, "%s%dSaliency_%2d_%2d_%2d.png", path.c_str(), proposals[p].id + 2, (int)(proposals[p].fill * 100+0.5), (int)(proposals[p].size * 100+0.5), (int)(proposals[p].obj * 100+0.5));
+					sprintf_s(imgName, "%s%dSaliency_%2d_%2d_%2d.png", path.c_str(), proposals[p].id + 2, (int)(proposals[p].fill * 100 + 0.5), (int)(proposals[p].size * 100 + 0.5), (int)(proposals[p].obj * 100 + 0.5));
+
 					cv::Mat sal = cv::imread(imgName, -1);
 					if (result.empty())
 						result = cv::Mat::zeros(sal.size(), CV_32F);
 					if (sal.channels() == 3)
 						cv::cvtColor(sal, sal, CV_BGR2GRAY);
+
+
 					float weight = proposals[p].score;
 					proposals[p].propSalMap = sal.clone();
 					//cv::addWeighted(sal, weight, result, 1, 0, result, CV_32F);
 					weightSum += weight;
 				}
-				for (size_t p = 0; p <1; p++)
+				for (size_t p = 0; p <proposals.size() / 2; p++)
 				{
-					cv::addWeighted(proposals[p].propSalMap, proposals[p].score/weightSum, result, 1, 0, result, CV_32F);
+					cv::addWeighted(proposals[p].propSalMap, proposals[p].score / weightSum, result, 1, 0, result, CV_32F);
 				}
 				cv::normalize(result, result, 0, 255, CV_MINMAX, CV_8U);
 				cv::threshold(result, result, 128, 255, CV_THRESH_BINARY);
@@ -256,26 +247,65 @@ void ChooseWeight()
 
 
 			}
-			pr/= count, rec /= count;
+			pr /= count, rec /= count;
 			float fm = (1 + 0.3) * pr * rec / (0.3 * pr + rec + EPS);
+
 			if (fm > maxFm)
 			{
 				maxFm = fm;
 				maxWf = wf;
 				maxWs = ws;
 				maxWo = wo;
+				std::cout << " Fm " << fm << " @ maxWf " << wf << " maxWs " << ws << " maxWo " << wo << "\n";
 			}
 		}
 	}
-	
+
 	std::cout << "max Fm " << maxFm << " @ maxWf " << maxWf << " maxWs " << maxWs << " maxWo " << maxWo << "\n";
-	
+
 }
+int EvaluateMain(int argc, char* argv[])
+{
+	int fId = atoi(argv[1]);
+	CStr wkDir = argv[2];
+	CStr imgFolder = argv[3];
+	CStr rstFolder = argv[4];
+	CStr methodNam = argv[5];
+	vecS des;
+	des.push_back(methodNam);
+	
+	switch (fId)
+	{
+	case 0:
+		CmEvaluation::EvalueMask(wkDir + imgFolder + "\\*.png", wkDir + "\\" + rstFolder + "\\", des, wkDir + "\\Results.m");
+		break;
+	case 1:
+		CmEvaluation::DebugEvalueMask(wkDir, imgFolder, rstFolder, des, wkDir + "CutRes.m");
+		break;
+	case 2:
+		CmEvaluation::EvalueMaskProposals(wkDir, imgFolder, rstFolder, des, wkDir + "CutRes.m");
+		break;
+	case 3:
+		ChooseWeight();
+		break;
+
+	default:
+		break;
+	}
+	//des.push_back("HC");  
+	//des.push_back("RC");
+	//des.push_back("SF"); des.push_back("SalPIF");
+	//CmEvaluation::EvalueMask(wkDir + imgFolder + "\\*.png", wkDir + "\\" + rstFolder+"\\", des, wkDir + "\\Results.m");
+	//CmEvaluation::EvalueMaskProposals(wkDir, imgFolder, rstFolder, des, wkDir + "CutRes.m");
+	//CmEvaluation::DebugEvalueMask(wkDir, imgFolder, rstFolder, des, wkDir + "CutRes.m");
+	return 1;
+}
+
 int main(int argc, char* argv[])
 {	
-	ChooseWeight();
-	return 0;
-	//return EvaluateMain(argc, argv);
+	//ChooseWeight();
+	//return 0;
+	return EvaluateMain(argc, argv);
 	//TestGetHC();
 	//return 0;
 	CStr wkDir = "G:\\MSRA10K_Imgs_GT\\MSRA10K_Imgs_GT\\";

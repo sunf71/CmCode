@@ -273,25 +273,43 @@ int EvaluateMain(int argc, char* argv[])
 	CStr methodNam = argv[5];
 	vecS des;
 	des.push_back(methodNam);
-	
-	switch (fId)
-	{
-	case 0:
-		CmEvaluation::EvalueMask(wkDir + imgFolder + "\\*.png", wkDir + "\\" + rstFolder + "\\", des, wkDir + "\\Results.m");
-		break;
-	case 1:
-		CmEvaluation::DebugEvalueMask(wkDir, imgFolder, rstFolder, des, wkDir + "CutRes.m");
-		break;
-	case 2:
-		CmEvaluation::EvalueMaskProposals(wkDir, imgFolder, rstFolder, des, wkDir + "CutRes.m");
-		break;
-	case 3:
-		ChooseWeight();
-		break;
 
-	default:
-		break;
+	if (argc == 7)
+	{
+		int nr = atoi(argv[6]);
+		vecS rstDirs;
+		for (int i = 0; i < nr; i++)
+		{
+			char outFile[50];
+			sprintf_s(outFile, "%s%d", rstFolder.c_str(), i);
+			rstDirs.push_back(std::string(outFile));
+		}
+		
+		CmEvaluation::EvalueMaskProposals(wkDir, imgFolder, rstDirs, des, wkDir + "\\Results.m");
 	}
+	else
+	{
+		switch (fId)
+		{
+		case 0:
+			CmEvaluation::EvalueMask(wkDir + imgFolder + "\\*.png", wkDir + "\\" + rstFolder + "\\", des, wkDir + "\\Results.m");
+			break;
+		case 1:
+			CmEvaluation::DebugEvalueMask(wkDir, imgFolder, rstFolder, des, wkDir + "CutRes.m");
+			break;
+		case 2:
+			CmEvaluation::EvalueMaskProposals(wkDir, imgFolder, rstFolder, des, wkDir + "CutRes.m");
+			break;
+		case 3:
+			ChooseWeight();
+			break;
+
+		default:
+			break;
+		}
+	}
+
+	
 	//des.push_back("HC");  
 	//des.push_back("RC");
 	//des.push_back("SF"); des.push_back("SalPIF");

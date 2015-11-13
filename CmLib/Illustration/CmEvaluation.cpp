@@ -187,6 +187,99 @@ void CmEvaluation::EvalueMask(CStr gtW, CStr &maskDir, CStr &des, CStr resFile, 
 	vecS descri(1); descri[0] = des; 
 	EvalueMask(gtW, maskDir, descri, resFile, betaSqr, alertNul, suffix);
 }
+void CmEvaluation::EvalueMaskProposals(CStr& wkDir, CStr &inDir, vecS& maskDirs, vecS &des, CStr resFile, double betaSqr, bool alertNul, CStr suffix)
+{
+	CStr gtW = wkDir + inDir + "\\*.png";
+	CStr inputW = wkDir + inDir + "\\*.jpg";
+	CStr failPath80 = wkDir + "\\fail80\\";
+	CStr failPath50 = wkDir + "\\fail50\\";
+	CStr finalDir = wkDir + "\\Final\\";
+	CmFile::MkDir(failPath80);
+	CmFile::MkDir(failPath50);
+	CmFile::MkDir(finalDir);
+
+	vecS namesNS;
+	string gtDir, gtExt;
+	int imgNum = CmFile::GetNamesNE(inputW, namesNS, gtDir, gtExt);
+	gtExt = ".png";
+	int methodNum = (int)des.size();
+	vecD pr(methodNum), rec(methodNum), count(methodNum), fm(methodNum);
+	for (int i = 0; i < imgNum; i++){
+		
+		Mat truM = imread(gtDir + namesNS[i] + gtExt, CV_LOAD_IMAGE_GRAYSCALE);
+		
+		double maxFm(0);
+		double maxP(0);
+		double maxR(0);
+		Mat fRes;
+		
+		
+		for (int m = 0; m < methodNum; m++)	{
+			
+			string mapName;
+			for (int s = 0; s < maskDirs.size(); s++)
+			{
+				CStr mapName = wkDir + maskDirs[s] + "\\" + namesNS[i] + "_" + des[0] + ".png";
+				
+				Mat res = imread(mapName, CV_LOAD_IMAGE_GRAYSCALE);
+				if (truM.data == NULL || res.data == NULL || truM.size != res.size){
+					if (alertNul)
+						printf("Truth(%d, %d), Res(%d, %d): %s\n", truM.cols, truM.rows, res.cols, res.rows, _S(mapName));
+					continue;
+				}
+				compare(truM, 128, truM, CMP_GE);
+				compare(res, 128, res, CMP_GE);
+				Mat commMat;
+				bitwise_and(truM, res, commMat);
+				double commV = sum(commMat).val[0];
+				double p = commV / (sum(res).val[0] + EPS);
+				double r = commV / (sum(truM).val[0] + EPS);
+				double fm = (1 + betaSqr) * p * r / (betaSqr * p + r + EPS);
+				if (fm > maxFm)
+				{
+					maxFm = fm;
+					maxP = p;
+					maxR = r;
+					fRes = res.clone();
+				
+				}
+			}
+			CStr fsName = finalDir + namesNS[i] + "_" + des[0] + ".png";
+			imwrite(fsName, fRes);
+			char fmStr[5];
+			sprintf(fmStr, "%2d", (int)(maxFm * 100));
+			if (maxFm < 0.5)
+			{
+
+				mapName = failPath50 + namesNS[i] + "_" + CStr(fmStr) + ".png";
+				imwrite(mapName, fRes);
+				CStr imgFile = wkDir + inDir + "\\" + namesNS[i] + ".jpg";
+				CStr dstFile = failPath50 + namesNS[i] + ".jpg";
+				CmFile::Copy(imgFile, dstFile);
+			}
+			else if (maxFm< 0.8)
+			{
+				mapName = failPath80 + namesNS[i] + "_" + CStr(fmStr) + ".png";
+				imwrite(mapName, fRes);
+				CStr imgFile = wkDir + inDir + "\\" + namesNS[i] + ".jpg";
+				CStr dstFile = failPath80 + namesNS[i] + ".jpg";
+				CmFile::Copy(imgFile, dstFile);
+			}
+			pr[m] += maxP;
+			rec[m] += maxR;
+			count[m]++;
+		}
+	}
+
+	for (int m = 0; m < methodNum; m++){
+		pr[m] /= count[m], rec[m] /= count[m];
+		fm[m] = (1 + betaSqr) * pr[m] * rec[m] / (betaSqr * pr[m] + rec[m] + EPS);
+	}
+
+	
+	if (des.size() == 1)
+		printf("Precision = %g, recall = %g, F-Measure = %g\n", pr[0], rec[0], fm[0]);
+}
 void CmEvaluation::EvalueMaskProposals(CStr& wkDir, CStr &inDir, CStr& maskDir, vecS &des, CStr resFile, double betaSqr, bool alertNul, CStr suffix)
 {
 

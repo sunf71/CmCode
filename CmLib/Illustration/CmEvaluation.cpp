@@ -121,7 +121,13 @@ double CmEvaluation::Evaluate_(CStr &gtImgW, CStr &inDir, CStr& resExt, vecD &pr
 		Mat gtFM = imread(truthDir + names[i] + gtExt, CV_LOAD_IMAGE_GRAYSCALE), gtBM;
 		if (gtFM.data == NULL) 
 			continue;
-		CV_Assert_(resS.size() == gtFM.size(), ("Saliency map and ground truth image size mismatch: %s\n", _S(names[i])));
+		//CV_Assert_(resS.size() == gtFM.size(), ("Saliency map and ground truth image size mismatch: %s\n", _S(names[i])));
+		if (resS.size() != gtFM.size())
+		{
+			cv::resize(resS, resS, gtFM.size());
+			cv::imwrite(inDir + names[i] + resExt, resS);
+			std::cout << "Saliency map and ground truth image size mismatch:" << _S(names[i]) << "\n";
+		}
 		compare(gtFM, 128, gtFM, CMP_GT);
 		bitwise_not(gtFM, gtBM);
 		double gtF = sum(gtFM).val[0];
@@ -140,6 +146,10 @@ double CmEvaluation::Evaluate_(CStr &gtImgW, CStr &inDir, CStr& resExt, vecD &pr
 			//double tn = gtB - fp;
 
 			recall[thr] += tp/(gtF+EPS);
+			if (thr == 1 && tp / (gtF + EPS) < 0.9)
+			{
+				std::cout << i << "=" << tp / (gtF + EPS)<<"\n";
+			}
 			double total = EPS + tp + fp;
 			precision[thr] += (tp+EPS)/total;
 
@@ -211,7 +221,7 @@ void CmEvaluation::EvalueMaskProposals(CStr& wkDir, CStr &inDir, vecS& maskDirs,
 		double maxFm(0);
 		double maxP(0);
 		double maxR(0);
-		Mat fRes;
+		Mat fRes = cv::Mat::zeros(truM.size(), CV_8U);
 		
 		
 		for (int m = 0; m < methodNum; m++)	{
@@ -219,9 +229,11 @@ void CmEvaluation::EvalueMaskProposals(CStr& wkDir, CStr &inDir, vecS& maskDirs,
 			string mapName;
 			for (int s = 0; s < maskDirs.size(); s++)
 			{
-				CStr mapName = wkDir + maskDirs[s] + "\\" + namesNS[i] + "_" + des[0] + ".png";
+				CStr mapName = wkDir + maskDirs[s] + "/" + namesNS[i] + "_" + des[0] + ".png";
 				
 				Mat res = imread(mapName, CV_LOAD_IMAGE_GRAYSCALE);
+				CStr tmapName = wkDir + maskDirs[s] + "/" + namesNS[i] + "/saliency/" + namesNS[i] + "_" + des[0] + ".png";
+				Mat tres = imread(tmapName, CV_LOAD_IMAGE_GRAYSCALE);
 				if (truM.data == NULL || res.data == NULL || truM.size != res.size){
 					if (alertNul)
 						printf("Truth(%d, %d), Res(%d, %d): %s\n", truM.cols, truM.rows, res.cols, res.rows, _S(mapName));
@@ -240,7 +252,7 @@ void CmEvaluation::EvalueMaskProposals(CStr& wkDir, CStr &inDir, vecS& maskDirs,
 					maxFm = fm;
 					maxP = p;
 					maxR = r;
-					fRes = res.clone();
+					fRes = tres.clone();
 				
 				}
 			}

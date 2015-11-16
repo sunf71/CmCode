@@ -323,11 +323,11 @@ int main(int argc, char* argv[])
 {	
 	//ChooseWeight();
 	//return 0;
-	return EvaluateMain(argc, argv);
+	//return EvaluateMain(argc, argv);
 	//TestGetHC();
 	//return 0;
-	CStr wkDir = "G:\\MSRA10K_Imgs_GT\\MSRA10K_Imgs_GT\\";
-	CStr inDir = wkDir + "test500\\", outDir = wkDir + "Test500RRC/";
+	CStr wkDir = "G:/ECSSD_Saliency_DS/images/";
+	CStr inDir = wkDir + "images/", outDir = wkDir + "RC/";
 	//CmFile::Copy2Dir(inDir + "*.jpg", outDir);
 
 	// Saliency detection method pretended in my ICCV 2013 paper http://mmcheng.net/effisalobj/.
@@ -335,11 +335,11 @@ int main(int argc, char* argv[])
 
 	// Saliency detection method presented in PAMI 2014 (CVPR 2011) paper http://mmcheng.net/salobj/.
 	//CmSalCut::Demo(inDir + "*.jpg", inDir + "*.png", outDir); 
-	CmSaliencyRC::Get(inDir + "*.jpg", outDir);	
+	//CmSaliencyRC::Get(inDir + "*.jpg", outDir);	
 	
-	//vecS des;
-	//des.push_back("GC");  des.push_back("RC");
-	////CmEvaluation::Evaluate(inDir + "*.png", outDir, wkDir + "Results.m", des);
+	vecS des;
+	des.push_back("RM"); // des.push_back("RC"); //des.push_back("CHS");
+	CmEvaluation::Evaluate(inDir + "*.png", outDir, wkDir + "Results.m", des);
 	//CmEvaluation::EvalueMask(inDir + "*.png", outDir, "RCC", wkDir + "CutRes.m");
 
 	return 0;

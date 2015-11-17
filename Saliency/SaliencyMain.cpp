@@ -320,30 +320,31 @@ int EvaluateMain(int argc, char* argv[])
 }
 void GetMSRA1k()
 {
-	CStr gtW = "G:/MSRA1K/binarymasks/binarymasks/*.bmp";
+	CStr gtW = "F:\\TDDOWNLOAD\\BaiduYun\\binarymasks\\binarymasks\\*.bmp";
 	vecS namesNS;
 	string gtDir, gtExt;
 	int imgNum = CmFile::GetNamesNE(gtW, namesNS, gtDir, gtExt);
-	CStr dstDir = "G:\MSRA1K\MSRA5K\Image\\";
-	CStr dstDir = "G:\MSRA1K\"
+	CStr dstDir = "F:\\TDDOWNLOAD\\BaiduYun\\ImageB\\Image\\";
+	CStr outDir = "F:\\ECSSD_Saliency_DS\\MSRA1k\\";
 	for (size_t i = 0; i < imgNum; i++)
 	{
 	
-		std::string dstFName = dstDir + "/" + std::string(&namesNS[i][0], 1) + "/" + namesNS[i] + ".jpg";
-		CmFile::Copy()
+		CStr srcFName = dstDir + std::string(&namesNS[i][0], 1) + "/" + namesNS[i] + ".jpg";
+		CStr dstFName = outDir + namesNS[i] + ".jpg";
+		CmFile::Copy(srcFName,dstFName);
 
 	}
 
 }
 int main(int argc, char* argv[])
 {	
-	GetMSRA1k();
+	//GetMSRA1k();
 	//ChooseWeight();
 	//return 0;
 	//return EvaluateMain(argc, argv);
 	//TestGetHC();
 	//return 0;
-	CStr wkDir = "G:/ECSSD_Saliency_DS/images/";
+	CStr wkDir = "E:/myprojects/datasets/MSRA_Saliency_DS/";
 	CStr inDir = wkDir + "images/", outDir = wkDir + "RC/";
 	//CmFile::Copy2Dir(inDir + "*.jpg", outDir);
 
@@ -355,7 +356,7 @@ int main(int argc, char* argv[])
 	//CmSaliencyRC::Get(inDir + "*.jpg", outDir);	
 	
 	vecS des;
-	des.push_back("RM");  des.push_back("RC"); des.push_back("CHS");
+	des.push_back("RM");  des.push_back("RC"); //des.push_back("CHS");
 	CmEvaluation::Evaluate(inDir + "*.png", outDir, wkDir + "Results.m", des);
 	//CmEvaluation::EvalueMask(inDir + "*.png", outDir, "RCC", wkDir + "CutRes.m");
 

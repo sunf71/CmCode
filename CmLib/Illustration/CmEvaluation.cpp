@@ -146,10 +146,7 @@ double CmEvaluation::Evaluate_(CStr &gtImgW, CStr &inDir, CStr& resExt, vecD &pr
 			//double tn = gtB - fp;
 
 			recall[thr] += tp/(gtF+EPS);
-			if (thr == 1 && tp / (gtF + EPS) < 0.9)
-			{
-				std::cout << i << "=" << tp / (gtF + EPS)<<"\n";
-			}
+			
 			double total = EPS + tp + fp;
 			precision[thr] += (tp+EPS)/total;
 
@@ -221,7 +218,10 @@ void CmEvaluation::EvalueMaskProposals(CStr& wkDir, CStr &inDir, vecS& maskDirs,
 		double maxFm(0);
 		double maxP(0);
 		double maxR(0);
-		Mat fRes = cv::Mat::zeros(truM.size(), CV_8U);
+
+		CStr tmapName = wkDir + maskDirs[0] + "/" + namesNS[i] + "_" + des[0] + "N.png";
+		Mat fRes = imread(tmapName, CV_LOAD_IMAGE_GRAYSCALE);
+		
 		
 		
 		for (int m = 0; m < methodNum; m++)	{
@@ -232,7 +232,7 @@ void CmEvaluation::EvalueMaskProposals(CStr& wkDir, CStr &inDir, vecS& maskDirs,
 				CStr mapName = wkDir + maskDirs[s] + "/" + namesNS[i] + "_" + des[0] + ".png";
 				
 				Mat res = imread(mapName, CV_LOAD_IMAGE_GRAYSCALE);
-				CStr tmapName = wkDir + maskDirs[s] + "/" + namesNS[i] + "/saliency/" + namesNS[i] + "_" + des[0] + ".png";
+				CStr tmapName = wkDir + maskDirs[s] + "/" + namesNS[i] + "_" + des[0] + "N.png";
 				Mat tres = imread(tmapName, CV_LOAD_IMAGE_GRAYSCALE);
 				if (truM.data == NULL || res.data == NULL || truM.size != res.size){
 					if (alertNul)

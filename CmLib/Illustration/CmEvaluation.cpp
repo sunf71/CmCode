@@ -6,6 +6,7 @@ const int CmEvaluation::NUM_THRESHOLD =  COLOR_NUM / STEP + 1;
 
 void CmEvaluation::Evaluate(CStr gtW, CStr &salDir, CStr &resName, vecS &des)
 {
+	double betaSqr = 0.3; // As suggested by most papers for salient object detection
 	int NumMethod = des.size(); // Number of different methods
 	vector<vecD> precision(NumMethod), recall(NumMethod), tpr(NumMethod), fpr(NumMethod);
 	static const int CN = 21; // Color Number 
@@ -14,7 +15,11 @@ void CmEvaluation::Evaluate(CStr gtW, CStr &salDir, CStr &resName, vecS &des)
 		"'--k'", "'--b'", "'--g'", "'--r'", "'--c'", "'--m'", "'--y'"
 	};
 	FILE* f = fopen(_S(resName), "w");
+	FILE* mf = fopen("FMeasure.m", "w");
+
 	CV_Assert(f != NULL);
+	fprintf(mf, "clear;\nclose all;\nclc;\n\n\n%%%%\nfigure(1);\nhold on;\n");
+
 	fprintf(f, "clear;\nclose all;\nclc;\n\n\n%%%%\nfigure(1);\nhold on;\n");
 	vecD thr(NUM_THRESHOLD);
 	for (int i = 0; i < NUM_THRESHOLD; i++)
@@ -22,22 +27,41 @@ void CmEvaluation::Evaluate(CStr gtW, CStr &salDir, CStr &resName, vecS &des)
 	PrintVector(f, thr, "Threshold");
 	fprintf(f, "\n");
 	
+	PrintVector(mf, thr, "Threshold");
+	fprintf(f, "\n");
+
 	vecD mae(NumMethod);
+	vector<vecD> fms(NumMethod);
 	for (int i = 0; i < NumMethod; i++)
+	{
 		mae[i] = Evaluate_(gtW, salDir, "_" + des[i] + ".png", precision[i], recall[i], tpr[i], fpr[i]); //Evaluate(salDir + "*" + des[i] + ".png", gtW, val[i], recall[i], t);
+		
+		fms[i].resize(NUM_THRESHOLD);
+		for (int j = 0; j < NUM_THRESHOLD; j++)
+			fms[i][j] = (1 + betaSqr) * precision[i][j] * recall[i][j] / (betaSqr * precision[i][j] + recall[i][j]);
+
+	}
+		
+	
+	
 
 	string leglendStr("legend(");
 	vecS strPre(NumMethod), strRecall(NumMethod), strTpr(NumMethod), strFpr(NumMethod);
+	vecS strFm(NumMethod);
 	for (int i = 0; i < NumMethod; i++){
 		strPre[i] = format("Precision_%s", _S(des[i]));
 		strRecall[i] = format("Recall_%s", _S(des[i]));
 		strTpr[i] = format("TPR_%s", _S(des[i]));
 		strFpr[i] = format("FPR_%s", _S(des[i]));
+		strFm[i] = format("FM_%s", _S(des[i]));
 		PrintVector(f, recall[i], strRecall[i]);
 		PrintVector(f, precision[i], strPre[i]);
 		PrintVector(f, tpr[i], strTpr[i]);
 		PrintVector(f, fpr[i], strFpr[i]);
+		
+		PrintVector(mf, fms[i], strFm[i]);
 		fprintf(f, "plot(%s, %s, %s, 'linewidth', %d);\n", _S(strRecall[i]), _S(strPre[i]), c[i % CN], i < CN ? 2 : 1);
+		fprintf(mf, "plot(%s, %s, %s, 'linewidth', %d);\n", "Threshold", _S(strFm[i]), c[i % CN], i < CN ? 2 : 1);
 		leglendStr += format("'%s', ",  _S(des[i]));
 	}
 	leglendStr.resize(leglendStr.size() - 2);
@@ -45,7 +69,10 @@ void CmEvaluation::Evaluate(CStr gtW, CStr &salDir, CStr &resName, vecS &des)
 	string xLabel = "label('Recall');\n";
 	string yLabel = "label('Precision')\n";
 	fprintf(f, "hold off;\nx%sy%s\n%s\ngrid on;\naxis([0 1 0 1]);\ntitle('Precision recall curve');\n", _S(xLabel), _S(yLabel), _S(leglendStr));
-
+	xLabel = "label('Threshold');\n";
+	yLabel = "label('F-Measure')\n";
+	fprintf(mf, "hold off;\nx%sy%s\n%s\ngrid on;\naxis([0 256 0 1]);\ntitle('F-measure curve');\n", _S(xLabel),  _S(yLabel), _S(leglendStr));
+	fclose(mf);
 
 	fprintf(f, "\n\n\n%%%%\nfigure(2);\nhold on;\n");
 	for (int i = 0; i < NumMethod; i++)
@@ -54,7 +81,7 @@ void CmEvaluation::Evaluate(CStr gtW, CStr &salDir, CStr &resName, vecS &des)
 	yLabel = "label('True positive rate')\n";
 	fprintf(f, "hold off;\nx%sy%s\n%s\ngrid on;\naxis([0 1 0 1]);\n\n\n%%%%\nfigure(3);\ntitle('ROC curve');\n", _S(xLabel), _S(yLabel), _S(leglendStr));
 
-	double betaSqr = 0.3; // As suggested by most papers for salient object detection
+	
 	vecD areaROC(NumMethod, 0), avgFMeasure(NumMethod, 0), maxFMeasure(NumMethod, 0);
 	for (int i = 0; i < NumMethod; i++){
 		CV_Assert(fpr[i].size() == tpr[i].size() && precision[i].size() == recall[i].size() && fpr[i].size() == precision[i].size());

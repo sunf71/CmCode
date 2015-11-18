@@ -344,7 +344,7 @@ int main(int argc, char* argv[])
 	//return EvaluateMain(argc, argv);
 	//TestGetHC();
 	//return 0;
-	CStr wkDir = "E:/myprojects/datasets/MSRA_Saliency_DS/";
+	CStr wkDir = "G:/SaliencyDataSet/MSRA1k/";
 	CStr inDir = wkDir + "images/", outDir = wkDir + "RC/";
 	//CmFile::Copy2Dir(inDir + "*.jpg", outDir);
 
@@ -356,8 +356,8 @@ int main(int argc, char* argv[])
 	//CmSaliencyRC::Get(inDir + "*.jpg", outDir);	
 	
 	vecS des;
-	des.push_back("RM");  des.push_back("RC"); //des.push_back("CHS");
-	CmEvaluation::Evaluate(inDir + "*.png", outDir, wkDir + "Results.m", des);
+	des.push_back("RM");  des.push_back("RC"); des.push_back("res");
+	CmEvaluation::Evaluate(inDir + "*.png", outDir, wkDir + "SResults.m", des);
 	//CmEvaluation::EvalueMask(inDir + "*.png", outDir, "RCC", wkDir + "CutRes.m");
 
 	return 0;

@@ -1,20 +1,18 @@
 #include "stdafx.h"
-void TestGetHC()
+void GetRC(int argc, char* argv[])
 {
-	CStr wkDir = "G:/SaliencyDataSet/Moseg/";
-	CStr inDir = wkDir + "car/", outDir = wkDir + "Saliency/";
+	CStr wkDir = argv[1];
+	CStr inDir = wkDir + argv[2]+"/", outDir = wkDir + argv[3]+"/";
 	CmFile::Copy2Dir(inDir + "*.jpg", outDir);
 
 	vecS names;
 	string sinDir, ext;
 	int imgNum = CmFile::GetNamesNE(inDir+"*.jpg", names, sinDir, ext);
 	CmFile::MkDir(outDir);
-	//vector<CmTimer> timer;
-	//for (int f = 0; f < SAL_TYPE_NUM; f++)
-	//timer.push_back(CmTimer(SAL_TYPE_DES[f]));
-
+	CmTimer timer;
+	timer.Start();
 	//disable omp parallel when testing the running efficiency
-#pragma omp parallel for 
+//#pragma omp parallel for 
 	for (int i = 0; i < imgNum; i++){
 		string name = names[i] + ext;
 		//printf("Processing %d/%dth image: %-20s\r", i, imgNum, name.c_str());
@@ -35,6 +33,7 @@ void TestGetHC()
 	}
 	//for (int f = 0; f < SAL_TYPE_NUM; f++)
 	//	timer[f].Report();
+	timer.StopAndReport();
 	printf("Get saliency finished%-40s\n", "");
 }
 void Evaluate()
@@ -336,28 +335,35 @@ void GetMSRA1k()
 	}
 
 }
+
 int main(int argc, char* argv[])
 {	
+	
+	//GetRC(argc, argv);
+	//return 0;
 	//GetMSRA1k();
 	//ChooseWeight();
 	//return 0;
 	//return EvaluateMain(argc, argv);
 	//TestGetHC();
 	//return 0;
-	CStr wkDir = "G:/SaliencyDataSet/MSRA1k/";
-	CStr inDir = wkDir + "images/", outDir = wkDir + "RC/";
+	CStr wkDir = "D:/SaliencyDS/ECSSD/";
+	CStr inDir = wkDir + "images/", outDir = wkDir + "all/";
 	//CmFile::Copy2Dir(inDir + "*.jpg", outDir);
 
 	// Saliency detection method pretended in my ICCV 2013 paper http://mmcheng.net/effisalobj/.
 	//CmSaliencyGC::Demo(inDir + "*.jpg", outDir); 
 
 	// Saliency detection method presented in PAMI 2014 (CVPR 2011) paper http://mmcheng.net/salobj/.
-	//CmSalCut::Demo(inDir + "*.jpg", inDir + "*.png", outDir); 
-	//CmSaliencyRC::Get(inDir + "*.jpg", outDir);	
-	
+	/*CmSalCut::Demo(inDir + "*.jpg", inDir + "*.png", outDir); 
+	CmSaliencyRC::Get(inDir + "*.jpg", outDir);	*/
+	//return 0;
 	vecS des;
-	des.push_back("RM");  des.push_back("RC"); des.push_back("res");
-	CmEvaluation::Evaluate(inDir + "*.png", outDir, wkDir + "SResults.m", des);
+	des.push_back("RMF");  des.push_back("CHS"); des.push_back("DSR");
+	des.push_back("RC"); des.push_back("GC"); des.push_back("PISA");
+	 des.push_back("MC"); des.push_back("GMR"); des.push_back("SF");
+	des.push_back("IG"); des.push_back("SR"); 
+	CmEvaluation::Evaluate(inDir + "*.png", outDir, outDir + "Results.m", des);
 	//CmEvaluation::EvalueMask(inDir + "*.png", outDir, "RCC", wkDir + "CutRes.m");
 
 	return 0;

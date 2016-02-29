@@ -37,11 +37,15 @@ void CmEvaluation::Evaluate(CStr gtW, CStr &salDir, CStr &resName, vecS &des)
 		mae[i] = Evaluate_(gtW, salDir, "_" + des[i] + ".png", precision[i], recall[i], tpr[i], fpr[i]); //Evaluate(salDir + "*" + des[i] + ".png", gtW, val[i], recall[i], t);
 		
 		fms[i].resize(NUM_THRESHOLD);
-		for (int j = 0; j < NUM_THRESHOLD; j++)
-			fms[i][j] = (1 + betaSqr) * precision[i][j] * recall[i][j] / (betaSqr * precision[i][j] + recall[i][j]);
-
-	}
 		
+		for (int j = 0; j < NUM_THRESHOLD; j++)
+		{
+			fms[i][j] = (1 + betaSqr) * precision[i][j] * recall[i][j] / (betaSqr * precision[i][j] + recall[i][j]);
+		
+		}
+
+	
+	}
 	
 	
 
@@ -71,7 +75,7 @@ void CmEvaluation::Evaluate(CStr gtW, CStr &salDir, CStr &resName, vecS &des)
 	fprintf(f, "hold off;\nx%sy%s\n%s\ngrid on;\naxis([0 1 0 1]);\ntitle('Precision recall curve');\n", _S(xLabel), _S(yLabel), _S(leglendStr));
 	xLabel = "label('Threshold');\n";
 	yLabel = "label('F-Measure')\n";
-	fprintf(mf, "hold off;\nx%sy%s\n%s\ngrid on;\naxis([0 256 0 1]);\ntitle('F-measure curve');\n", _S(xLabel),  _S(yLabel), _S(leglendStr));
+	fprintf(mf, "hold off;\nx%sy%s\n%s\ngrid on;\naxis([1 256 0 1]);\ntitle('F-Measure curve');\n", _S(xLabel),  _S(yLabel), _S(leglendStr));
 	fclose(mf);
 
 	fprintf(f, "\n\n\n%%%%\nfigure(2);\nhold on;\n");
@@ -246,7 +250,7 @@ void CmEvaluation::EvalueMaskProposals(CStr& wkDir, CStr &inDir, vecS& maskDirs,
 		double maxP(0);
 		double maxR(0);
 
-		CStr tmapName = wkDir + maskDirs[0] + "/" + namesNS[i] + "_" + des[0] + "N.png";
+		CStr tmapName = wkDir + maskDirs[0] + "/" + namesNS[i] + "_" + des[0] + ".png";
 		Mat fRes = imread(tmapName, CV_LOAD_IMAGE_GRAYSCALE);
 		
 		
@@ -259,7 +263,7 @@ void CmEvaluation::EvalueMaskProposals(CStr& wkDir, CStr &inDir, vecS& maskDirs,
 				CStr mapName = wkDir + maskDirs[s] + "/" + namesNS[i] + "_" + des[0] + ".png";
 				
 				Mat res = imread(mapName, CV_LOAD_IMAGE_GRAYSCALE);
-				CStr tmapName = wkDir + maskDirs[s] + "/" + namesNS[i] + "_" + des[0] + "N.png";
+				CStr tmapName = wkDir + maskDirs[s] + "/" + namesNS[i] + "_" + des[0] + ".png";
 				Mat tres = imread(tmapName, CV_LOAD_IMAGE_GRAYSCALE);
 				if (truM.data == NULL || res.data == NULL || truM.size != res.size){
 					if (alertNul)
